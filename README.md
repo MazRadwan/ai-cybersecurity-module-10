@@ -6,7 +6,7 @@ A Django 6.0 + Ollama LLM application with **12 intentional vulnerabilities** th
 
 ## Security Assessment Report
 
-Open `report.html` in a browser for the full interactive report with before/after code comparisons, scan results, and test results.
+Open `index.html` in a browser for the full interactive report, or view it at [GitHub Pages](https://mazradwan.github.io/ai-cybersecurity-module-10/).
 
 ## Vulnerabilities Found & Fixed
 
