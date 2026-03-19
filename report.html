@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vulnerable Archive — Security Assessment Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-abyss: #06090f;
+  --bg-deep: #0a0e1a;
+  --bg-panel: #0f1423;
+  --bg-card: #141a2e;
+  --bg-elevated: #1a2138;
+  --bg-hover: #1e2744;
+  --border-dim: #1e2744;
+  --border-subtle: #2a3456;
+  --border-active: #3d4f7a;
+  --text-primary: #e8ecf4;
+  --text-secondary: #8892a8;
+  --text-muted: #5a6478;
+  --text-dim: #3d4a60;
+  --accent: #00d4aa;
+  --accent-glow: rgba(0, 212, 170, 0.12);
+  --accent-dim: rgba(0, 212, 170, 0.06);
+  --accent2: #0ea5e9;
+  --danger: #ef4444;
+  --danger-dim: rgba(239,68,68,0.08);
+  --warning: #f59e0b;
+  --warning-dim: rgba(245,158,11,0.08);
+  --success: #22c55e;
+  --success-dim: rgba(34,197,94,0.08);
+  --info: #3b82f6;
+  --purple: #8b5cf6;
+  --purple-dim: rgba(139,92,246,0.08);
+  --sidebar-w: 280px;
+  --header-h: 56px;
+  --banner-h: 32px;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-h) + var(--banner-h) + 24px);
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-abyss);
+  color: var(--text-primary);
+  line-height: 1.7;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0,212,170,0.03) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(239,68,68,0.02) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* BANNER */
+.banner {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--banner-h);
+  background: linear-gradient(90deg, #7f1d1d 0%, #991b1b 50%, #7f1d1d 100%);
+  display: flex; align-items: center; justify-content: center; gap: 24px;
+  z-index: 1000;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase;
+  color: #fca5a5;
+  border-bottom: 1px solid #dc2626;
+}
+.banner::before, .banner::after {
+  content: ''; width: 6px; height: 6px; background: #ef4444; border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+/* HEADER */
+.header {
+  position: fixed; top: var(--banner-h); left: 0; right: 0;
+  height: var(--header-h);
+  background: rgba(10,14,26,0.92);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom: 1px solid var(--border-dim);
+  display: flex; align-items: center; padding: 0 32px;
+  z-index: 900;
+}
+.header-brand { display: flex; align-items: center; gap: 16px; }
+.header-logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--danger) 0%, var(--accent) 100%);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600;
+  color: var(--bg-abyss); flex-shrink: 0;
+}
+.header-title { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--text-primary); }
+.header-subtitle { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 500; }
+.header-meta { margin-left: auto; display: flex; align-items: center; gap: 24px; }
+.header-date { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: calc(var(--banner-h) + var(--header-h)); left: 0; bottom: 0;
+  width: var(--sidebar-w); background: var(--bg-deep);
+  border-right: 1px solid var(--border-dim);
+  overflow-y: auto; z-index: 800; padding: 20px 0;
+  scrollbar-width: thin; scrollbar-color: var(--border-dim) transparent;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 4px; }
+
+.nav-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--text-dim); padding: 16px 24px 8px;
+}
+.nav-label.accent { color: var(--accent); opacity: 0.6; }
+.nav-label.danger { color: var(--danger); opacity: 0.6; }
+.nav-label.purple { color: var(--purple); opacity: 0.6; }
+
+.nav-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 24px; cursor: pointer; transition: all 0.15s;
+  border-left: 2px solid transparent; text-decoration: none; color: inherit;
+}
+.nav-item:hover { background: var(--bg-hover); }
+.nav-item.active { background: var(--accent-dim); border-left-color: var(--accent); }
+.nav-dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--text-dim);
+  margin-top: 7px; flex-shrink: 0; transition: background 0.2s;
+}
+.nav-item.active .nav-dot { background: var(--accent); }
+.nav-text { font-size: 13px; color: var(--text-secondary); line-height: 1.4; transition: color 0.15s; }
+.nav-item.active .nav-text { color: var(--text-primary); font-weight: 500; }
+.nav-item:hover .nav-text { color: var(--text-primary); }
+
+/* MAIN */
+.main {
+  margin-left: var(--sidebar-w);
+  margin-top: calc(var(--banner-h) + var(--header-h));
+  padding: 40px 56px 120px;
+  max-width: 1100px;
+  position: relative; z-index: 1;
+}
+
+/* HERO */
+.hero { padding: 60px 0 48px; border-bottom: 1px solid var(--border-dim); margin-bottom: 48px; }
+.hero-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+.hero h1 {
+  font-family: 'Instrument Serif', serif; font-size: 48px; line-height: 1.1;
+  color: var(--text-primary); margin-bottom: 20px; letter-spacing: -1px;
+}
+.hero h1 em { font-style: italic; color: var(--accent); }
+.hero-desc { font-size: 16px; color: var(--text-secondary); max-width: 700px; line-height: 1.8; margin-bottom: 32px; }
+.hero-stats { display: flex; gap: 40px; flex-wrap: wrap; }
+.hero-stat-value {
+  font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600;
+  display: block; margin-bottom: 4px;
+}
+.hero-stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+.c-danger { color: var(--danger); }
+.c-accent { color: var(--accent); }
+.c-warning { color: var(--warning); }
+.c-success { color: var(--success); }
+
+/* SECTIONS */
+.section { margin-bottom: 64px; }
+.section-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+.section-icon {
+  width: 40px; height: 40px; border-radius: 10px; display: flex;
+  align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+}
+.section-icon.danger { background: var(--danger-dim); border: 1px solid rgba(239,68,68,0.2); }
+.section-icon.accent { background: var(--accent-dim); border: 1px solid rgba(0,212,170,0.2); }
+.section-icon.purple { background: var(--purple-dim); border: 1px solid rgba(139,92,246,0.2); }
+.section-icon.warning { background: var(--warning-dim); border: 1px solid rgba(245,158,11,0.2); }
+.section-icon.info { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); }
+.section-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.section-num.danger { color: var(--danger); }
+.section-num.accent { color: var(--accent); }
+.section-num.purple { color: var(--purple); }
+.section-title { font-family: 'Instrument Serif', serif; font-size: 28px; color: var(--text-primary); }
+h3 { font-size: 18px; font-weight: 600; margin: 32px 0 16px; color: var(--text-primary); }
+h4 { font-size: 15px; font-weight: 600; margin: 24px 0 12px; color: var(--text-secondary); }
+p { color: var(--text-secondary); margin-bottom: 16px; }
+
+/* TAGS */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+.tag-critical { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+.tag-high { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+.tag-medium { background: rgba(59,130,246,0.08); color: var(--info); border: 1px solid rgba(59,130,246,0.2); }
+.tag-fixed { background: var(--success-dim); color: var(--success); border: 1px solid rgba(34,197,94,0.2); }
+.tag-pass { background: var(--success-dim); color: var(--success); border: 1px solid rgba(34,197,94,0.2); }
+.tag-fail { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+.tag-error { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+.tag-accent { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,212,170,0.2); }
+.tag-purple { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(139,92,246,0.2); }
+
+/* TABLES */
+table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; }
+th {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted);
+  text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+}
+th:first-child { border-radius: 8px 0 0 0; }
+th:last-child { border-radius: 0 8px 0 0; }
+td {
+  padding: 12px 16px; border-bottom: 1px solid var(--border-dim);
+  font-size: 13px; color: var(--text-secondary); vertical-align: top;
+}
+tr:hover td { background: var(--bg-card); }
+td code {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px;
+  color: var(--accent);
+}
+
+/* CODE BLOCKS */
+.code-block { margin: 16px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-dim); }
+.code-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 16px; background: var(--bg-panel);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);
+  border-bottom: 1px solid var(--border-dim);
+}
+.code-header .copy-btn {
+  background: var(--bg-elevated); border: 1px solid var(--border-dim);
+  color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; padding: 3px 10px; border-radius: 4px; cursor: pointer;
+  transition: all 0.15s;
+}
+.code-header .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+.code-block pre {
+  padding: 16px; background: var(--bg-card); overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7;
+  color: var(--text-secondary); tab-size: 4;
+}
+.code-block .kw { color: #c792ea; }
+.code-block .fn { color: #82aaff; }
+.code-block .str { color: #c3e88d; }
+.code-block .cm { color: #546e7a; }
+.code-block .var { color: #f78c6c; }
+.code-block .op { color: #89ddff; }
+.code-block .err { color: #ef4444; }
+
+/* BEFORE/AFTER */
+.ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.ba-card { border-radius: 10px; overflow: hidden; border: 1px solid var(--border-dim); }
+.ba-label {
+  padding: 8px 16px; font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+}
+.ba-card.before .ba-label { background: rgba(239,68,68,0.08); color: var(--danger); border-bottom: 1px solid rgba(239,68,68,0.15); }
+.ba-card.after .ba-label { background: rgba(34,197,94,0.08); color: var(--success); border-bottom: 1px solid rgba(34,197,94,0.15); }
+.ba-card pre {
+  padding: 14px 16px; background: var(--bg-card);
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7;
+  color: var(--text-secondary); overflow-x: auto; margin: 0;
+}
+
+/* COLLAPSIBLE */
+.collapsible { border: 1px solid var(--border-dim); border-radius: 10px; margin: 16px 0; overflow: hidden; }
+.collapsible-trigger {
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; background: var(--bg-panel); border: none;
+  cursor: pointer; color: inherit; text-align: left; transition: background 0.15s;
+}
+.collapsible-trigger:hover { background: var(--bg-elevated); }
+.collapsible-chevron {
+  width: 16px; height: 16px; color: var(--text-dim);
+  transition: transform 0.25s ease; flex-shrink: 0;
+}
+.collapsible.open .collapsible-chevron { transform: rotate(90deg); }
+.collapsible-title { font-weight: 600; font-size: 14px; color: var(--text-primary); flex: 1; }
+.collapsible-body {
+  padding: 0 20px; max-height: 0; overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+}
+.collapsible.open .collapsible-body { max-height: 4000px; padding: 16px 20px 20px; }
+
+/* CALLOUT */
+.callout {
+  padding: 16px 20px; border-radius: 8px; margin: 16px 0;
+  font-size: 13px; line-height: 1.7; border-left: 3px solid;
+}
+.callout-danger { background: var(--danger-dim); border-color: var(--danger); color: var(--text-secondary); }
+.callout-success { background: var(--success-dim); border-color: var(--success); color: var(--text-secondary); }
+.callout-info { background: rgba(59,130,246,0.06); border-color: var(--info); color: var(--text-secondary); }
+.callout strong { color: var(--text-primary); }
+
+/* DIVIDER */
+.divider { border: none; height: 1px; background: var(--border-dim); margin: 64px 0; }
+
+/* FOOTER */
+.footer {
+  margin-left: var(--sidebar-w); border-top: 1px solid var(--border-dim);
+  padding: 32px 56px; display: flex; justify-content: space-between;
+  position: relative; z-index: 1;
+}
+.footer-left { font-size: 12px; color: var(--text-dim); line-height: 1.8; }
+.footer-right {
+  text-align: right; font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim); letter-spacing: 0.5px; line-height: 2;
+}
+
+/* SCROLL TOP */
+.scroll-top {
+  position: fixed; bottom: 28px; right: 28px; width: 40px; height: 40px;
+  background: var(--bg-panel); border: 1px solid var(--border-dim); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; opacity: 0; transform: translateY(10px);
+  transition: all 0.25s; z-index: 500; color: var(--text-muted);
+}
+.scroll-top.visible { opacity: 1; transform: translateY(0); }
+.scroll-top:hover { border-color: var(--accent); color: var(--accent); }
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .sidebar { display: none; }
+  .main, .footer { margin-left: 0; }
+  .main { padding: 24px 20px 80px; }
+  .hero h1 { font-size: 36px; }
+  .ba-grid { grid-template-columns: 1fr; }
+}
+@media print {
+  .banner, .header, .sidebar, .scroll-top { display: none !important; }
+  .main { margin: 0; padding: 20px; max-width: 100%; }
+  .footer { margin: 0; }
+  body { background: #fff; color: #111; }
+  .section-title, h3, h4, .hero h1 { color: #111; }
+  p, td, .callout, li { color: #333; }
+  .collapsible-body { max-height: none !important; padding: 16px 20px !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- BANNER -->
+<div class="banner">Security Assessment Report</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">VA</div>
+    <div>
+      <div class="header-title">Vulnerable Archive</div>
+      <div class="header-subtitle">Security Assessment</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="header-date">Maz Radwan &middot; 2026-03-19</div>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="nav-label accent">Overview</div>
+  <a class="nav-item active" href="#hero"><span class="nav-dot"></span><span class="nav-text">Executive Summary</span></a>
+  <a class="nav-item" href="#tracker"><span class="nav-dot"></span><span class="nav-text">Vulnerability Tracker</span></a>
+
+  <div class="nav-label danger">Traditional Vulnerabilities</div>
+  <a class="nav-item" href="#trad-vulns"><span class="nav-dot"></span><span class="nav-text">Deterministic Vulnerabilities</span></a>
+
+  <div class="nav-label purple">LLM / AI Vulnerabilities</div>
+  <a class="nav-item" href="#llm-vulns"><span class="nav-dot"></span><span class="nav-text">Probabilistic Vulnerabilities</span></a>
+
+  <div class="nav-label accent">Analysis</div>
+  <a class="nav-item" href="#data-leaks"><span class="nav-dot"></span><span class="nav-text">Data Leaks</span></a>
+  <a class="nav-item" href="#scan-results"><span class="nav-dot"></span><span class="nav-text">Scan Results</span></a>
+  <a class="nav-item" href="#test-results"><span class="nav-dot"></span><span class="nav-text">Test Results</span></a>
+  <a class="nav-item" href="#fixes"><span class="nav-dot"></span><span class="nav-text">Fixes Applied</span></a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-eyebrow">Module 10 Capstone Project</div>
+    <h1>Vulnerable Archive<br><em>Security Assessment</em></h1>
+    <p class="hero-desc">
+      Comprehensive security assessment of a Django 6.0 + Ollama LLM web application.
+      12 vulnerabilities identified across XSS, SQL Injection, Broken Access Control, Secrets Exposure,
+      SSRF, Prompt Injection, and Information Disclosure. All vulnerabilities fixed and verified
+      with a test-based approach.
+    </p>
+    <div class="hero-stats">
+      <div><span class="hero-stat-value c-danger">12</span><span class="hero-stat-label">Vulnerabilities</span></div>
+      <div><span class="hero-stat-value c-warning">10</span><span class="hero-stat-label">Data Leaks</span></div>
+      <div><span class="hero-stat-value c-accent">30</span><span class="hero-stat-label">Tests Written</span></div>
+      <div><span class="hero-stat-value c-success">100%</span><span class="hero-stat-label">Fixed</span></div>
+    </div>
+  </section>
+
+  <div class="callout callout-info">
+    <strong>Tools Used:</strong> Semgrep (SAST), TruffleHog (Secrets), Manual Code Review, Django TestCase (Exploit &amp; Functionality Tests)
+  </div>
+
+  <!-- VULNERABILITY TRACKER -->
+  <hr class="divider">
+  <section class="section" id="tracker">
+    <div class="section-header">
+      <div class="section-icon danger">&#9888;</div>
+      <div>
+        <div class="section-num danger">Findings Overview</div>
+        <h2 class="section-title">Vulnerability Tracker</h2>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>Type</th><th>Vulnerability</th><th>Severity</th><th>Location</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Secrets</td><td>Hardcoded JWT Secret</td><td><span class="tag tag-high">HIGH</span></td><td><code>views.py:40</code></td><td>Env var via os.environ.get()</td></tr>
+        <tr><td>2</td><td>Secrets</td><td>Django SECRET_KEY exposed</td><td><span class="tag tag-critical">CRITICAL</span></td><td><code>settings.py:23</code></td><td>Env var via dotenv</td></tr>
+        <tr><td>3</td><td>XSS</td><td>Stored XSS via |safe filter</td><td><span class="tag tag-high">HIGH</span></td><td><code>view_archive.html</code></td><td>Removed |safe filter</td></tr>
+        <tr><td>4</td><td>SQLi</td><td>SQL Injection in search</td><td><span class="tag tag-critical">CRITICAL</span></td><td><code>views.py:134</code></td><td>Django ORM</td></tr>
+        <tr><td>5</td><td>Access Control</td><td>IDOR on view/edit/delete</td><td><span class="tag tag-high">HIGH</span></td><td><code>views.py:98-125</code></td><td>Ownership check</td></tr>
+        <tr><td>6</td><td>Prompt Injection</td><td>LLM data exfiltration</td><td><span class="tag tag-high">HIGH</span></td><td><code>views.py:243-310</code></td><td>Domain allowlist + sanitization</td></tr>
+        <tr><td>7</td><td>Prompt Injection</td><td>Path traversal via LLM</td><td><span class="tag tag-high">HIGH</span></td><td><code>views.py:198-239</code></td><td>Deterministic path</td></tr>
+        <tr><td>8</td><td>Prompt Injection</td><td>Unrestricted LLM SQL</td><td><span class="tag tag-critical">CRITICAL</span></td><td><code>views.py:148-194</code></td><td>SELECT-only + user_id filter</td></tr>
+        <tr><td>9</td><td>Info Disclosure</td><td>DEBUG = True</td><td><span class="tag tag-medium">MEDIUM</span></td><td><code>settings.py:26</code></td><td>Env var, defaults False</td></tr>
+        <tr><td>10</td><td>Misconfiguration</td><td>Empty ALLOWED_HOSTS</td><td><span class="tag tag-medium">MEDIUM</span></td><td><code>settings.py:28</code></td><td>Env var with defaults</td></tr>
+        <tr><td>11</td><td>SSRF</td><td>No URL validation</td><td><span class="tag tag-high">HIGH</span></td><td><code>views.py:70</code></td><td>_is_url_safe() validation</td></tr>
+        <tr><td>12</td><td>Info Disclosure</td><td>Raw SQL errors exposed</td><td><span class="tag tag-medium">MEDIUM</span></td><td><code>views.py:142</code></td><td>Generic error message</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- TRADITIONAL VULNERABILITIES -->
+  <hr class="divider">
+  <section class="section" id="trad-vulns">
+    <div class="section-header">
+      <div class="section-icon danger">&#128274;</div>
+      <div>
+        <div class="section-num danger">Deterministic &middot; Repeatable</div>
+        <h2 class="section-title">Traditional Vulnerabilities</h2>
+      </div>
+    </div>
+    <p>These vulnerabilities produce the same exploit result every time. Same input = same exploit. Detectable with standard SAST tools and verifiable with deterministic tests.</p>
+
+    <!-- VULN 1 -->
+    <div class="collapsible" id="v1">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v1')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#1 — Hardcoded JWT Secret</span>
+        <span class="tag tag-high">HIGH</span>
+      </button>
+      <div class="collapsible-body">
+        <p>The JWT signing secret <code>"do_not_share_this"</code> was hardcoded in source code. Anyone with repo access can forge valid tokens for any user.</p>
+        <p><strong>Detected by:</strong> Semgrep (<code>jwt-python-hardcoded-secret</code>)</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>SECRET = <span style="color:#ef4444">"do_not_share_this"</span></pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>SECRET = os.environ.get(<span style="color:#c3e88d">"JWT_SECRET"</span>,
+    <span style="color:#c3e88d">"fallback-dev-secret-change-in-production"</span>)</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 2 -->
+    <div class="collapsible" id="v2">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v2')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#2 — Django SECRET_KEY Exposed</span>
+        <span class="tag tag-critical">CRITICAL</span>
+      </button>
+      <div class="collapsible-body">
+        <p>Django's SECRET_KEY was hardcoded with the <code>django-insecure-</code> prefix. Enables session hijacking, CSRF bypass, and cookie tampering.</p>
+        <p><strong>Detected by:</strong> Manual Review</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>SECRET_KEY = <span style="color:#ef4444">"django-insecure-^3!*dt2xq2vs7..."</span></pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>SECRET_KEY = os.environ.get(<span style="color:#c3e88d">"DJANGO_SECRET_KEY"</span>,
+    <span style="color:#c3e88d">"fallback-only-for-dev-not-for-production"</span>)</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 3 -->
+    <div class="collapsible" id="v3">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v3')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#3 — Stored XSS via |safe Filter</span>
+        <span class="tag tag-high">HIGH</span>
+      </button>
+      <div class="collapsible-body">
+        <p>Django's <code>|safe</code> template filter was used on user-controlled <code>notes</code> and <code>content</code> fields, rendering raw HTML including <code>&lt;script&gt;</code> tags in the victim's browser.</p>
+        <p><strong>Detected by:</strong> Manual Review</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>{{ archive.notes<span style="color:#ef4444">|safe</span> }}
+{{ archive.content<span style="color:#ef4444">|safe</span> }}</pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>{{ archive.notes }}
+{{ archive.content }}</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 4 -->
+    <div class="collapsible" id="v4">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v4')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#4 — SQL Injection in Search</span>
+        <span class="tag tag-critical">CRITICAL</span>
+      </button>
+      <div class="collapsible-body">
+        <p>User input was interpolated directly into a raw SQL query via f-string. Allowed UNION-based attacks to extract password hashes and cross-user data.</p>
+        <p><strong>Detected by:</strong> Semgrep (<code>sql-injection-db-cursor-execute</code>, <code>tainted-sql-string</code>, <code>formatted-sql-query</code>, <code>sqlalchemy-execute-raw-query</code>)</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>sql = <span style="color:#ef4444">f"SELECT ... WHERE title LIKE '%{query}%'"</span>
+cursor.execute(sql)</pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>archives = Archive.objects.filter(
+    user=request.user,
+    title__icontains=query
+).select_related(<span style="color:#c3e88d">"user"</span>)</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 5 -->
+    <div class="collapsible" id="v5">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v5')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#5 — IDOR (Broken Access Control)</span>
+        <span class="tag tag-high">HIGH</span>
+      </button>
+      <div class="collapsible-body">
+        <p>View, edit, and delete endpoints only checked if an archive exists — not if it belonged to the requesting user. Any authenticated user could access any archive by ID.</p>
+        <p><strong>Detected by:</strong> Manual Review</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>archive = get_object_or_404(Archive, pk=archive_id)</pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>archive = get_object_or_404(Archive, pk=archive_id,
+    <span style="color:#c3e88d">user=request.user</span>)</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 9 -->
+    <div class="collapsible" id="v9">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v9')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#9 — DEBUG = True</span>
+        <span class="tag tag-medium">MEDIUM</span>
+      </button>
+      <div class="collapsible-body">
+        <p>Debug mode exposes full stack traces, settings values, database paths, and installed apps on any error page.</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>DEBUG = <span style="color:#ef4444">True</span></pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>DEBUG = os.environ.get(<span style="color:#c3e88d">"DEBUG"</span>, <span style="color:#c3e88d">"False"</span>).lower() == <span style="color:#c3e88d">"true"</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 10 -->
+    <div class="collapsible" id="v10">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v10')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#10 — Empty ALLOWED_HOSTS</span>
+        <span class="tag tag-medium">MEDIUM</span>
+      </button>
+      <div class="collapsible-body">
+        <p>Empty <code>ALLOWED_HOSTS</code> is permissive when DEBUG=True and rejects all requests when DEBUG=False.</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>ALLOWED_HOSTS = <span style="color:#ef4444">[]</span></pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>ALLOWED_HOSTS = os.environ.get(
+    <span style="color:#c3e88d">"ALLOWED_HOSTS"</span>, <span style="color:#c3e88d">"localhost,127.0.0.1"</span>
+).split(<span style="color:#c3e88d">","</span>)</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 11 -->
+    <div class="collapsible" id="v11">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v11')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#11 — Server-Side Request Forgery (SSRF)</span>
+        <span class="tag tag-high">HIGH</span>
+      </button>
+      <div class="collapsible-body">
+        <p>The "add archive" endpoint fetched any user-supplied URL without validation. Attackers could probe internal services, steal cloud metadata credentials (AWS 169.254.169.254), and scan internal networks.</p>
+        <p><strong>Detected by:</strong> Semgrep (<code>ssrf-injection-requests</code>)</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>response = requests.get(url, timeout=10)
+<span style="color:#546e7a"># No URL validation at all</span></pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre><span style="color:#c792ea">if not</span> _is_url_safe(url):
+    messages.error(request, <span style="color:#c3e88d">"Blocked URL"</span>)
+    <span style="color:#c792ea">return</span> render(...)
+<span style="color:#546e7a"># Validates scheme, resolves DNS,</span>
+<span style="color:#546e7a"># blocks private/reserved IPs</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 12 -->
+    <div class="collapsible" id="v12">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v12')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#12 — SQL Error Disclosure</span>
+        <span class="tag tag-medium">MEDIUM</span>
+      </button>
+      <div class="collapsible-body">
+        <p>Raw SQL errors were displayed to users, revealing table names, column counts, and query structure — helping attackers refine injection payloads.</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>messages.error(request, <span style="color:#ef4444">f"SQL Error: {str(e)}"</span>)</pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>messages.error(request,
+    <span style="color:#c3e88d">"An error occurred while searching."</span>)</pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LLM VULNERABILITIES -->
+  <hr class="divider">
+  <section class="section" id="llm-vulns">
+    <div class="section-header">
+      <div class="section-icon purple">&#129302;</div>
+      <div>
+        <div class="section-num purple">Probabilistic &middot; LLM-Dependent</div>
+        <h2 class="section-title">LLM / AI Vulnerabilities</h2>
+      </div>
+    </div>
+    <p>These vulnerabilities depend on non-deterministic LLM behavior. The same prompt may produce different results across runs. Tests use mocked LLM responses for deterministic proof, while the code-level guardrails protect against any LLM output.</p>
+
+    <div class="callout callout-info">
+      <strong>Key Distinction:</strong> Traditional vulnerabilities are fixed by removing the vulnerable code pattern. LLM vulnerabilities are fixed by adding guardrails around what the LLM output can do — the LLM itself is untrusted.
+    </div>
+
+    <!-- VULN 6 -->
+    <div class="collapsible open" id="v6">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v6')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#6 — Prompt Injection → Data Exfiltration</span>
+        <span class="tag tag-high">HIGH</span>
+      </button>
+      <div class="collapsible-body">
+        <h4>Attack Vector</h4>
+        <p>Hidden HTML in archive content (<code>display:none</code>) instructs the LLM to use the <code>fetch_url</code> tool to send user notes (containing PII like passwords and SSNs) to an attacker-controlled URL.</p>
+
+        <h4>Three-Layer Fix</h4>
+        <p><strong>1. Strip hidden HTML</strong> before passing content to LLM — removes <code>display:none</code> elements and HTML comments.</p>
+        <p><strong>2. Don't pass user notes</strong> to the LLM prompt — the sensitive data never reaches the model.</p>
+        <p><strong>3. Domain allowlist</strong> for tool call URLs — only allows URLs matching the archive's original domain or explicitly provided by the user.</p>
+
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>prompt = f"""
+  Archive Content: {archive.content}
+  Archive Notes: {archive.notes}
+"""
+<span style="color:#546e7a"># Tool calls executed blindly:</span>
+requests.get(url_to_fetch, timeout=5)</pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>cleaned = _strip_hidden_html(archive.content)
+prompt = f"""
+  Archive Content: {cleaned}
+"""
+<span style="color:#546e7a"># Notes removed from prompt entirely</span>
+<span style="color:#546e7a"># Tool URLs checked against domain allowlist</span>
+<span style="color:#c792ea">if</span> fetch_domain <span style="color:#c792ea">not in</span> allowed_domains:
+    <span style="color:#546e7a"># BLOCKED</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 7 -->
+    <div class="collapsible" id="v7">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v7')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#7 — Path Traversal via LLM</span>
+        <span class="tag tag-high">HIGH</span>
+      </button>
+      <div class="collapsible-body">
+        <h4>Attack Vector</h4>
+        <p>The LLM was asked to generate a file path for exported summaries. A manipulated prompt could cause it to return paths like <code>/etc/passwd</code> or <code>../../../app/manage.py</code>, and the server would write to that location.</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>file_path = query_llm(path_prompt).strip()
+<span style="color:#c792ea">with</span> open(file_path, <span style="color:#c3e88d">"w"</span>) <span style="color:#c792ea">as</span> f:
+    f.write(summary_content)
+<span style="color:#546e7a"># LLM controls the file path!</span></pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre>safe_filename = re.sub(r<span style="color:#c3e88d">"[^a-zA-Z0-9._-]"</span>, <span style="color:#c3e88d">"_"</span>, hint)
+file_path = os.path.join(base_dir, safe_filename)
+file_path = os.path.realpath(file_path)
+<span style="color:#c792ea">if not</span> file_path.startswith(base_dir):
+    <span style="color:#546e7a"># BLOCKED - path traversal attempt</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULN 8 -->
+    <div class="collapsible" id="v8">
+      <button class="collapsible-trigger" onclick="toggleCollapsible('v8')">
+        <svg class="collapsible-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="collapsible-title">#8 — Unrestricted LLM-Generated SQL</span>
+        <span class="tag tag-critical">CRITICAL</span>
+      </button>
+      <div class="collapsible-body">
+        <h4>Attack Vector</h4>
+        <p>Natural language queries were converted to SQL by the LLM, then executed directly against the database with no validation. Prompt injection could produce <code>DELETE</code>, <code>DROP TABLE</code>, or cross-user <code>SELECT</code> queries.</p>
+        <div class="ba-grid">
+          <div class="ba-card before"><div class="ba-label">Vulnerable</div><pre>sql_query = query_llm(user_input, ...)
+cursor.execute(sql_query)
+<span style="color:#546e7a"># Executes ANYTHING the LLM generates</span></pre></div>
+          <div class="ba-card after"><div class="ba-label">Fixed</div><pre><span style="color:#c792ea">if not</span> normalized.upper().startswith(<span style="color:#c3e88d">"SELECT"</span>):
+    answer = <span style="color:#c3e88d">"Only SELECT queries are allowed."</span>
+<span style="color:#c792ea">else</span>:
+    <span style="color:#546e7a"># Force user_id filter</span>
+    enforced = query + f<span style="color:#c3e88d">" AND user_id = {user.id}"</span>
+    cursor.execute(enforced)</pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA LEAKS -->
+  <hr class="divider">
+  <section class="section" id="data-leaks">
+    <div class="section-header">
+      <div class="section-icon warning">&#128275;</div>
+      <div>
+        <div class="section-num danger">Sensitive Data Exposure</div>
+        <h2 class="section-title">Data Leaks Identified</h2>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>Data</th><th>Location</th><th>Leak Vector</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>JWT Secret <code>"do_not_share_this"</code></td><td><code>views.py:40</code></td><td>Hardcoded — token forgery</td><td><span class="tag tag-fixed">FIXED</span></td></tr>
+        <tr><td>2</td><td>Django SECRET_KEY</td><td><code>settings.py:23</code></td><td>Hardcoded — session hijacking</td><td><span class="tag tag-fixed">FIXED</span></td></tr>
+        <tr><td>3</td><td>User passwords <code>"password123"</code></td><td><code>seed_data.py</code></td><td>Hardcoded in seed script</td><td><span class="tag tag-accent">SEED DATA</span></td></tr>
+        <tr><td>4</td><td>Password hashes (<code>pbkdf2_sha256$</code>)</td><td>Database</td><td>SQLi UNION attack</td><td><span class="tag tag-fixed">FIXED</span></td></tr>
+        <tr><td>5</td><td>Bob's private notes</td><td>Database</td><td>IDOR access</td><td><span class="tag tag-fixed">FIXED</span></td></tr>
+        <tr><td>6</td><td>PII: "Hunter2" + SSN</td><td><code>seed_data.py:83</code></td><td>Prompt injection exfiltration</td><td><span class="tag tag-fixed">FIXED</span></td></tr>
+        <tr><td>7</td><td>Stack traces, settings</td><td>Runtime</td><td>DEBUG=True error pages</td><td><span class="tag tag-fixed">FIXED</span></td></tr>
+        <tr><td>8</td><td>AWS IAM credentials</td><td>Internal network</td><td>SSRF to 169.254.169.254</td><td><span class="tag tag-fixed">FIXED</span></td></tr>
+        <tr><td>9</td><td>Internal service info</td><td>Internal network</td><td>SSRF to internal hosts</td><td><span class="tag tag-fixed">FIXED</span></td></tr>
+        <tr><td>10</td><td>DB table structure</td><td>Error messages</td><td>SQL error disclosure</td><td><span class="tag tag-fixed">FIXED</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SCAN RESULTS -->
+  <hr class="divider">
+  <section class="section" id="scan-results">
+    <div class="section-header">
+      <div class="section-icon accent">&#128269;</div>
+      <div>
+        <div class="section-num accent">Before &amp; After Comparison</div>
+        <h2 class="section-title">Scan Results</h2>
+      </div>
+    </div>
+
+    <h3>Before Fix</h3>
+    <table>
+      <thead><tr><th>Tool</th><th>Findings</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>Semgrep (auto)</td><td><span class="tag tag-fail">11</span></td><td>JWT secret, SQLi x4, SSRF, SRI x2, CSRF false positives x3</td></tr>
+        <tr><td>TruffleHog (default)</td><td><span class="tag tag-pass">0</span></td><td>No standard secret patterns detected</td></tr>
+        <tr><td>TruffleHog (custom)</td><td><span class="tag tag-fail">1</span></td><td>Custom regex match in views.py</td></tr>
+        <tr><td>Exploit Tests</td><td><span class="tag tag-fail">15/15 PASS</span></td><td>All vulnerabilities exploitable</td></tr>
+      </tbody>
+    </table>
+
+    <h3>After Fix</h3>
+    <table>
+      <thead><tr><th>Tool</th><th>Findings</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>Semgrep (auto)</td><td><span class="tag tag-accent">7</span></td><td>4 removed (JWT + SQLi). Remaining: CSRF false positives, SRI, test file, SSRF guard not traced</td></tr>
+        <tr><td>TruffleHog (default)</td><td><span class="tag tag-pass">0</span></td><td>No secrets in source</td></tr>
+        <tr><td>Exploit Tests</td><td><span class="tag tag-pass">15/15 FAIL</span></td><td>All exploits blocked</td></tr>
+        <tr><td>Functionality Tests</td><td><span class="tag tag-pass">15/15 PASS</span></td><td>App works correctly</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- TEST RESULTS -->
+  <hr class="divider">
+  <section class="section" id="test-results">
+    <div class="section-header">
+      <div class="section-icon accent">&#9989;</div>
+      <div>
+        <div class="section-num accent">Test-Based Verification</div>
+        <h2 class="section-title">Test Results</h2>
+      </div>
+    </div>
+
+    <h3>Exploit Tests — Before: PASS, After: FAIL = Vulnerability Patched</h3>
+    <table>
+      <thead><tr><th>Test</th><th>Before</th><th>After</th><th>What It Proves</th></tr></thead>
+      <tbody>
+        <tr><td>SQLi UNION attack</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Can no longer extract cross-user data</td></tr>
+        <tr><td>SQLi password extraction</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Can no longer extract password hashes</td></tr>
+        <tr><td>IDOR view</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Can no longer view other users' archives</td></tr>
+        <tr><td>IDOR edit</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Can no longer edit other users' archives</td></tr>
+        <tr><td>IDOR delete</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Can no longer delete other users' archives</td></tr>
+        <tr><td>XSS in notes</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Script tags now HTML-escaped</td></tr>
+        <tr><td>XSS in content</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>HTML content now escaped</td></tr>
+        <tr><td>JWT forgery</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-error">ERROR</span></td><td>Old secret can't decode new tokens</td></tr>
+        <tr><td>Prompt injection exfil</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Attacker URL blocked by domain allowlist</td></tr>
+        <tr><td>Path traversal</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>File written to safe directory only</td></tr>
+        <tr><td>LLM SQL cross-user</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>user_id filter enforced</td></tr>
+        <tr><td>LLM SQL destructive</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>DELETE blocked by SELECT-only check</td></tr>
+        <tr><td>SSRF cloud metadata</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Internal IPs blocked</td></tr>
+        <tr><td>SSRF internal scan</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Internal hostnames blocked</td></tr>
+        <tr><td>SQL error disclosure</td><td><span class="tag tag-pass">PASS</span></td><td><span class="tag tag-fail">FAIL</span></td><td>Generic error message shown</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Functionality Tests — All PASS = App Still Works</h3>
+    <table>
+      <thead><tr><th>Test</th><th>Result</th><th>What It Proves</th></tr></thead>
+      <tbody>
+        <tr><td>Search returns results</td><td><span class="tag tag-pass">PASS</span></td><td>Title search works correctly</td></tr>
+        <tr><td>Empty search</td><td><span class="tag tag-pass">PASS</span></td><td>No errors on empty query</td></tr>
+        <tr><td>No cross-user results</td><td><span class="tag tag-pass">PASS</span></td><td>Only own archives returned</td></tr>
+        <tr><td>Owner can view</td><td><span class="tag tag-pass">PASS</span></td><td>Access to own archives works</td></tr>
+        <tr><td>Owner can edit</td><td><span class="tag tag-pass">PASS</span></td><td>Edit own archives works</td></tr>
+        <tr><td>Owner can delete</td><td><span class="tag tag-pass">PASS</span></td><td>Delete own archives works</td></tr>
+        <tr><td>Other user gets 404</td><td><span class="tag tag-pass">PASS</span></td><td>Non-owners properly blocked</td></tr>
+        <tr><td>Notes escaped</td><td><span class="tag tag-pass">PASS</span></td><td>XSS payloads safely displayed</td></tr>
+        <tr><td>Content escaped</td><td><span class="tag tag-pass">PASS</span></td><td>HTML content safely displayed</td></tr>
+        <tr><td>Token works</td><td><span class="tag tag-pass">PASS</span></td><td>JWT endpoint generates valid tokens</td></tr>
+        <tr><td>Old secret fails</td><td><span class="tag tag-pass">PASS</span></td><td>Hardcoded secret can't decode</td></tr>
+        <tr><td>Internal URL blocked</td><td><span class="tag tag-pass">PASS</span></td><td>SSRF protection working</td></tr>
+        <tr><td>Localhost blocked</td><td><span class="tag tag-pass">PASS</span></td><td>Localhost URLs rejected</td></tr>
+        <tr><td>LLM SELECT works</td><td><span class="tag tag-pass">PASS</span></td><td>Valid DB queries return data</td></tr>
+        <tr><td>Export to correct dir</td><td><span class="tag tag-pass">PASS</span></td><td>Files written to safe directory</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- FIXES APPLIED -->
+  <hr class="divider">
+  <section class="section" id="fixes">
+    <div class="section-header">
+      <div class="section-icon accent">&#128736;</div>
+      <div>
+        <div class="section-num accent">Implementation</div>
+        <h2 class="section-title">Fixes Applied</h2>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>File</th><th>Changes</th></tr></thead>
+      <tbody>
+        <tr><td><code>views.py</code></td><td>JWT from env var, SSRF validation, IDOR ownership checks, ORM search, generic errors, SELECT-only LLM SQL, deterministic file paths, prompt injection defenses</td></tr>
+        <tr><td><code>settings.py</code></td><td>dotenv integration, SECRET_KEY / DEBUG / ALLOWED_HOSTS from environment variables</td></tr>
+        <tr><td><code>view_archive.html</code></td><td>Removed <code>|safe</code> filter from notes and content fields</td></tr>
+        <tr><td><code>docker-compose.yml</code></td><td>Added <code>env_file</code> directive (optional)</td></tr>
+        <tr><td><code>.env</code> (new)</td><td>Generated secrets for DJANGO_SECRET_KEY and JWT_SECRET (gitignored)</td></tr>
+        <tr><td><code>.gitignore</code></td><td>Added <code>.env</code> to prevent secret commits</td></tr>
+        <tr><td><code>tests.py</code></td><td>Added 15 functionality tests proving app works after fixes</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-left">
+    Vulnerable Archive &mdash; Security Assessment Report<br>
+    Module 10 Capstone Project &middot; AI Cybersecurity Course
+  </div>
+  <div class="footer-right">
+    Maz Radwan<br>
+    2026-03-19
+  </div>
+</footer>
+
+<!-- SCROLL TO TOP -->
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+</button>
+
+<script>
+function toggleCollapsible(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// Scroll to top button
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 400);
+});
+
+// Active nav tracking
+const sections = document.querySelectorAll('.section, .hero');
+const navItems = document.querySelectorAll('.nav-item');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navItems.forEach(item => {
+        item.classList.toggle('active', item.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

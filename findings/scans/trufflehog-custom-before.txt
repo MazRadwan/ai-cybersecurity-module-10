@@ -1,0 +1,12 @@
+🐷🔑🐷  TruffleHog. Unearth your secrets. 🐷🔑🐷
+
+2026-03-19T18:39:00-02:30	info-0	trufflehog	running source	{"source_manager_worker_id": "Lkr7s", "with_units": true}
+Found unverified result 🐷🔑❓
+Detector Type: CustomRegex
+Decoder Type: PLAIN
+Raw result: Query executed successfully (no results returned).
+Name: Security Question Answer
+File: ai-cybersecurity-module-10/vulnerable_archive/archiver/views.py
+Line: 186
+
+2026-03-19T18:39:00-02:30	info-0	trufflehog	finished scanning	{"chunks": 44, "bytes": 225342, "verified_secrets": 0, "unverified_secrets": 1, "scan_duration": "5.439375ms", "trufflehog_version": "3.93.8", "verification_caching": {"Hits":0,"Misses":1,"HitsWasted":0,"AttemptsSaved":0,"VerificationTimeSpentMS":0}}

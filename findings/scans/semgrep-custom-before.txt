@@ -1,0 +1,28 @@
+Rule hardcoded-password contains an exclude pattern 'test/**' that will soon be interpreted as '/test/**' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule hardcoded-password and change it to '**/test/**'. To confirm the anchored behavior and avoid this warning, change it to '/test/**'.
+Rule hardcoded-password contains an exclude pattern 'test/**' that will soon be interpreted as '/test/**' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule hardcoded-password and change it to '**/test/**'. To confirm the anchored behavior and avoid this warning, change it to '/test/**'.
+               
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 36 files tracked by git with 15 Code rules:
+  Scanning 36 files.
+Rule hardcoded-password contains an exclude pattern 'test/**' that will soon be interpreted as '/test/**' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule hardcoded-password and change it to '**/test/**'. To confirm the anchored behavior and avoid this warning, change it to '/test/**'.
+Rule hardcoded-password contains an exclude pattern 'test/**' that will soon be interpreted as '/test/**' to comply with the Semgrepignore v2 and Gitignore specifications. To make this pattern permanently unanchored, edit rule hardcoded-password and change it to '**/test/**'. To confirm the anchored behavior and avoid this warning, change it to '/test/**'.
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 1
+ • Targets scanned: 36
+ • Parsed lines: ~100.0%
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 1 rule on 36 files: 0 findings.
+
+A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading
+If Semgrep missed a finding, please send us feedback to let us know!
+See https://semgrep.dev/docs/reporting-false-negatives/

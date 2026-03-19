@@ -2,7 +2,10 @@ services:
   app-mod10:
     build: .
     ports:
-      - "8000:8000"
+      - "8001:8000"
+    env_file:
+      - path: .env
+        required: false
     environment:
       - OLLAMA_HOST=http://ollama-mod10:11434
     volumes:

@@ -1,0 +1,145 @@
+               
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 37 files tracked by git with 1063 Code rules:
+                                                                                                                        
+  Language      Rules   Files          Origin      Rules                                                                
+ ─────────────────────────────        ───────────────────                                                               
+  <multilang>      60      37          Community    1063                                                                
+  python          243      19                                                                                           
+  html              1      13                                                                                           
+                                                                                                                        
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 7 (7 blocking)
+ • Rules run: 304
+ • Targets scanned: 37
+ • Parsed lines: ~97.1%
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 304 rules on 37 files: 7 findings.
+
+A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading
+                   
+                   
+┌─────────────────┐
+│ 7 Code Findings │
+└─────────────────┘
+                                                                                              
+    ai-cybersecurity-module-10/vulnerable_archive/archiver/templates/archiver/add_archive.html
+    ❯❱ python.django.security.django-no-csrf-token.django-no-csrf-token
+          ❰❰ Blocking ❱❱
+          Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.
+          Details: https://sg.run/N0Bp                                                                   
+                                                                                                         
+           13┆ <form method="post">
+           14┆     {% csrf_token %}
+           15┆     <div class="mb-3">
+           16┆         <label for="url" class="form-label">URL to Archive</label>
+           17┆         <input type="url" class="form-control" id="url" name="url"
+               placeholder="https://example.com" required>                       
+           18┆         <div class="form-text">We will fetch and store the HTML content of this page.</div>
+           19┆     </div>
+           20┆
+           21┆     <div class="mb-3">
+           22┆         <label for="notes" class="form-label">Notes</label>
+             [hid 8 additional lines, adjust with --max-lines-per-finding] 
+                                                                                               
+    ai-cybersecurity-module-10/vulnerable_archive/archiver/templates/archiver/edit_archive.html
+    ❯❱ python.django.security.django-no-csrf-token.django-no-csrf-token
+          ❰❰ Blocking ❱❱
+          Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.
+          Details: https://sg.run/N0Bp                                                                   
+                                                                                                         
+           14┆ <form method="post">
+           15┆     {% csrf_token %}
+           16┆
+           17┆     <div class="mb-3">
+           18┆         <label class="form-label">URL (Read-only)</label>
+           19┆         <input type="text" class="form-control" value="{{ archive.url }}" disabled>
+           20┆     </div>
+           21┆
+           22┆     <div class="mb-3">
+           23┆         <label for="notes" class="form-label">Notes</label>
+             [hid 8 additional lines, adjust with --max-lines-per-finding] 
+                                                                                                 
+    ai-cybersecurity-module-10/vulnerable_archive/archiver/templates/archiver/export_summary.html
+    ❯❱ python.django.security.django-no-csrf-token.django-no-csrf-token
+          ❰❰ Blocking ❱❱
+          Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.
+          Details: https://sg.run/N0Bp                                                                   
+                                                                                                         
+           12┆ <form method="post">
+           13┆     {% csrf_token %}
+           14┆     <div class="mb-3">
+           15┆         <label for="topic" class="form-label">Summary Topic</label>
+           16┆         <input type="text" class="form-control" id="topic" name="topic" placeholder="e.g.,
+               The history of the internet" required>                                                    
+           17┆     </div>
+           18┆
+           19┆     <div class="mb-3">
+           20┆         <label for="filename_hint" class="form-label">Filename Hint</label>
+           21┆         <input type="text" class="form-control" id="filename_hint" name="filename_hint"
+               placeholder="e.g., history.txt" required>                                              
+             [hid 5 additional lines, adjust with --max-lines-per-finding] 
+                                                                              
+    ai-cybersecurity-module-10/vulnerable_archive/archiver/templates/base.html
+    ❯❱ html.security.audit.missing-integrity.missing-integrity
+          ❰❰ Blocking ❱❱
+          This tag is missing an 'integrity' subresource integrity attribute. The 'integrity' attribute allows
+          for the browser to verify that externally hosted files (for example from a CDN) are delivered       
+          without unexpected manipulation. Without this attribute, if an attacker can modify the externally   
+          hosted resource, this could lead to XSS and other types of attacks. To prevent this, include the    
+          base64-encoded cryptographic hash of the resource (file) you’re telling the browser to fetch in the 
+          'integrity' attribute for all externally hosted files.                                              
+          Details: https://sg.run/krXA                                                                        
+                                                                                                              
+            7┆ <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+               rel="stylesheet">                                                                   
+            ⋮┆----------------------------------------
+           73┆ <script                                                                                    
+               src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script
+               >                                                                                          
+                                                                   
+    ai-cybersecurity-module-10/vulnerable_archive/archiver/tests.py
+   ❯❯❱ python.jwt.security.jwt-hardcode.jwt-python-hardcoded-secret
+          ❰❰ Blocking ❱❱
+          Hardcoded JWT secret or private key is used. This is a Insufficiently Protected Credentials     
+          weakness: https://cwe.mitre.org/data/definitions/522.html Consider using an appropriate security
+          mechanism to protect the credentials (e.g. keeping secrets in environment variables)            
+          Details: https://sg.run/l2E9                                                                    
+                                                                                                          
+          172┆ forged_token = jwt.encode(
+          173┆     {"user_id": self.alice.id, "username": "alice"},
+          174┆     KNOWN_SECRET,
+          175┆     algorithm="HS256",
+          176┆ )
+                                                                   
+    ai-cybersecurity-module-10/vulnerable_archive/archiver/views.py
+   ❯❯❱ python.django.security.injection.ssrf.ssrf-injection-requests.ssrf-injection-requests
+          ❰❰ Blocking ❱❱
+          Data from request object is passed to a new server-side request. This could lead to a server-side  
+          request forgery (SSRF). To mitigate, ensure that schemes and hosts are validated against an        
+          allowlist, do not forward the response to the user, and ensure proper authentication and transport-
+          layer security in the proxied request. See https://owasp.org/www-                                  
+          community/attacks/Server_Side_Request_Forgery to learn more about SSRF vulnerabilities.            
+          Details: https://sg.run/YvY4                                                                       
+                                                                                                             
+          126┆ url = request.POST.get("url")
+          127┆ notes = request.POST.get("notes")
+          128┆
+          129┆ if url:
+          130┆     # FIX #11: SSRF protection - validate URL before fetching
+          131┆     if not _is_url_safe(url):
+          132┆         messages.error(
+          133┆             request,
+          134┆             "Invalid or blocked URL. Only public HTTP/HTTPS URLs are allowed.",
+          135┆         )
+             [hid 26 additional lines, adjust with --max-lines-per-finding] 
+

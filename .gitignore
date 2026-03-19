@@ -14,3 +14,6 @@ wheels/
 
 # notebook stuff
 .ipynb_checkpoints
+
+# Environment variables (secrets)
+.env
