@@ -4,9 +4,9 @@ Module 10 Capstone Project - AI Cybersecurity Course
 
 A Django 6.0 + Ollama LLM application with **12 intentional vulnerabilities** that were identified, exploited, and fixed using a test-based approach.
 
-## Security Assessment Report
+## [View the Full Interactive Security Report](https://mazradwan.github.io/ai-cybersecurity-module-10/)
 
-Open `index.html` in a browser for the full interactive report, or view it at [GitHub Pages](https://mazradwan.github.io/ai-cybersecurity-module-10/).
+The report includes before/after code comparisons, scan results, exploit test results, and detailed fix documentation for all 12 vulnerabilities.
 
 ## Vulnerabilities Found & Fixed
 
