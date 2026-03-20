@@ -258,12 +258,23 @@ def ask_database(request):
         elif "```" in sql_query:
             sql_query = sql_query.split("```")[1].strip()
 
-        # FIX #8: Only allow SELECT statements (blocks DELETE, DROP, UPDATE, INSERT)
-        normalized = sql_query.strip().rstrip(";").strip()
+        # FIX #8: Sanitize LLM-generated SQL before execution
+        # Strip comments (-- and /* */) to prevent filter bypass
+        sanitized = re.sub(r"--.*$", "", sql_query, flags=re.MULTILINE)
+        sanitized = re.sub(r"/\*.*?\*/", "", sanitized, flags=re.DOTALL)
+        normalized = sanitized.strip().rstrip(";").strip()
+
+        # Only allow SELECT statements (blocks DELETE, DROP, UPDATE, INSERT)
         if not normalized.upper().startswith("SELECT"):
             answer = "Only SELECT queries are allowed."
+        # Only allow queries against archiver_archive (blocks JOIN to auth_user etc.)
+        elif any(
+            table in normalized.upper()
+            for table in ["AUTH_USER", "DJANGO_SESSION", "SQLITE_MASTER"]
+        ):
+            answer = "Access restricted to archive data only."
         else:
-            # FIX #8: Force user_id filter to prevent cross-user data access
+            # Force user_id filter to prevent cross-user data access
             if " WHERE " in normalized.upper():
                 enforced_query = (
                     normalized + f" AND user_id = {int(request.user.id)}"
